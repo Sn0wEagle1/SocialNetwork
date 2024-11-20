@@ -1,0 +1,54 @@
+<!-- web/templates/posts.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Посты</title>
+    <link rel="stylesheet" href="/static/posts.css">
+</head>
+<body>
+    <!-- Шапка -->
+    <header class="header">
+        <div class="header-content">
+            <nav class="nav">
+                <a href="/profile">Профиль</a>
+                <a href="/posts">Посты</a>
+                <a href="/find-friends">Найти друзей</a>
+            </nav>
+            <div class="user-info">
+                <div class="dropdown">
+                    <button class="dropbtn">
+                        <span>{{.Username}}</span>
+                        <img src="{{.AvatarURL}}" alt="Аватар" class="avatar">
+                    </button>
+                    <div class="dropdown-content">
+                        <a href="/logout">Выйти</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Стена с постами -->
+    <main class="main-content">
+        <h1>Посты ваших друзей</h1>
+        {{if .NoFriends}}
+            <p>Добавьте друзей, чтобы читать их посты.</p>
+            <a href="/find-friends" class="btn">Добавить друзей</a>
+        {{else if .NoPosts}}
+            <p>В ближайшее время у друзей не было постов.</p>
+        {{else}}
+            <div class="posts">
+                {{range .Posts}}
+                    <div class="post">
+                        <h3>{{.Author}}</h3>
+                        <p>{{.Content}}</p>
+                        <small>{{.CreatedAt}}</small>
+                    </div>
+                {{end}}
+            </div>
+        {{end}}
+    </main>
+</body>
+</html>

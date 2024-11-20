@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Профиль</title>
+    <link rel="stylesheet" href="/static/posts.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <nav class="nav">
+                <a href="/profile">Профиль</a>
+                <a href="/posts">Посты</a>
+                <a href="/find-friends">Друзья</a>
+            </nav>
+            <div class="user-info">
+                <div class="dropdown">
+                    <button class="dropbtn">
+                        <span>{{.Username}}</span>
+                        <img src="{{.AvatarURL}}" alt="Аватар" class="avatar">
+                    </button>
+                    <div class="dropdown-content">
+                        <a href="/logout">Выйти</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <main class="profile-container">
+        <div class="profile-left">
+            <img src="{{.AvatarURL}}" alt="Аватар" class="profile-avatar-large">
+            <h2>{{.Username}}</h2>
+        </div>
+        <div class="profile-right">
+            <div class="profile-info">
+                <p><strong>Дата регистрации:</strong> {{.RegistrationDate.Format "02.01.2006"}}</p>
+                <p><strong>Постов:</strong> {{.PostCount}}</p>
+                <p><strong>Друзей:</strong> {{.FriendCount}}</p>
+            </div>
+            {{if .IsCurrentUser}}
+                <button onclick="location.href='/create-post'" class="btn create-post-btn">Создать пост</button>
+            {{end}}
+            <div class="profile-posts">
+                {{if .NoPosts}}
+                    <p class="no-posts">{{if .IsCurrentUser}}У вас нет постов{{else}}У этого пользователя нет постов{{end}}</p>
+                {{else}}
+                    {{range .Posts}}
+                        <div class="post">
+                            <p class="post-date">{{.CreatedAt}}</p>
+                            <p class="post-content">{{.Content}}</p>
+                        </div>
+                    {{end}}
+                {{end}}
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+

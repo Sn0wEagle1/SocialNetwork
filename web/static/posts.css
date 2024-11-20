@@ -1,0 +1,224 @@
+/* Основные стили */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+    color: #333;
+}
+
+/* Шапка */
+.header {
+    background-color: #007bff;
+    color: #fff;
+    padding: 15px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header-content {
+    width: 90%;
+    max-width: 1200px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav a {
+    color: #fff;
+    text-decoration: none;
+    margin: 0 15px;
+    font-weight: bold;
+}
+
+.nav a:hover {
+    text-decoration: underline;
+}
+
+.user-info {
+    align-items: center;
+    position: relative;
+    display: inline-block;
+}
+
+.user-info span {
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+/* Стиль кнопки для выпадающего меню */
+.dropbtn {
+    background-color: transparent;
+    color: white;
+    padding: 0;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+/* Стиль аватара */
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    margin-left: 10px;
+    transition: transform 0.2s;
+}
+
+/* Анимация поворота аватара при наведении */
+.dropbtn:hover .avatar {
+    transform: rotate(360deg);
+}
+
+/* Скрытое содержимое выпадающего меню */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #f9f9f9;
+    min-width: 120px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    border-radius: 4px;
+    z-index: 1;
+}
+
+/* Ссылки внутри выпадающего меню */
+.dropdown-content a {
+    color: #333;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown-content a:hover {
+    background-color: #f1f1f1;
+}
+
+/* Показ выпадающего меню при наведении */
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* Основной контент */
+.main-content {
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.posts {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.post {
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-left: 4px solid #007bff;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Центрирование и фиксированная ширина для профиля */
+.profile-container {
+    display: flex;
+    gap: 20px;
+    margin: 40px auto;
+    width: 80%;
+    max-width: 1000px; /* Ограничиваем максимальную ширину */
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Левая часть с аватаром */
+.profile-left {
+    text-align: center;
+}
+
+/* Увеличенный аватар для профиля */
+.profile-avatar-large {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 3px solid #ccc;
+    margin-bottom: 15px;
+}
+
+/* Правая часть профиля */
+.profile-right {
+    flex-grow: 1;
+    max-width: 600px; /* Ограничиваем ширину правой части */
+}
+
+/* Информация о профиле */
+.profile-info {
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Стили кнопки "Создать пост" */
+.create-post-btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-top: 15px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.create-post-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Контейнер для постов */
+.profile-posts {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Отдельный пост */
+.profile-posts .post {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.profile-posts .post:last-child {
+    border-bottom: none;
+}
+
+.post-date {
+    color: #777;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.post-content {
+    font-size: 16px;
+}
+
+.no-posts {
+    text-align: center;
+    color: #777;
+    font-size: 16px;
+    padding: 20px;
+}
