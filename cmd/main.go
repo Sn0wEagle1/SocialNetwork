@@ -1,4 +1,3 @@
-// cmd/main.go
 package main
 
 import (
@@ -16,6 +15,7 @@ func main() {
 	http.HandleFunc("/posts", internal.PostsHandler)
 	http.HandleFunc("/logout", internal.LogoutHandler)
 	http.HandleFunc("/profile", internal.ProfileHandler)
+	http.HandleFunc("/create-post", internal.CreatePostHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 
 	log.Println("Сервер запущен на http://localhost:8080")

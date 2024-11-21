@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание поста</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Создать пост</h1>
+        {{if .ErrorMsg}}
+        <p class="error">{{.ErrorMsg}}</p>
+        {{end}}
+        <form action="/create-post" method="post" enctype="multipart/form-data">
+            <!-- Поле для текста поста -->
+            <label for="text">Текст поста (опционально):</label>
+            <textarea id="text" name="content" rows="4">{{.Text}}</textarea>
+
+            <!-- Поле для загрузки фотографии -->
+            <label for="image">Добавить фотографию:</label>
+            <input type="file" id="image" name="image" accept="image/*">
+
+            <!-- Кнопка отправки -->
+            <button type="submit">Опубликовать</button>
+        </form>
+    </div>
+</body>
+</html>

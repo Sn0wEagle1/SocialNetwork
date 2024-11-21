@@ -19,10 +19,10 @@
 
         <form action="/register" method="post">
             <label for="username">Имя пользователя:</label>
-            <input type="text" id="username" name="username" value="{{.FormData.Username}}" required>
+            <input type="text" id="username" name="username" value="{{.Email}}" required>
 
             <label for="email">Email:</label>
-            <input type="email" id="email" name="email" value="{{.FormData.Email}}" required>
+            <input type="email" id="email" name="email" value="{{.Email}}" required>
 
             <label for="password">Пароль:</label>
             <input type="password" id="password" name="password" required>

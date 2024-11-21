@@ -42,7 +42,9 @@
             {{end}}
             <div class="profile-posts">
                 {{if .NoPosts}}
-                    <p class="no-posts">{{if .IsCurrentUser}}У вас нет постов{{else}}У этого пользователя нет постов{{end}}</p>
+                    <p class="no-posts">
+                        {{if .IsCurrentUser}}У вас нет постов{{else}}У этого пользователя нет постов{{end}}
+                    </p>
                 {{else}}
                     {{range .Posts}}
                         <div class="post">
@@ -56,4 +58,3 @@
     </main>
 </body>
 </html>
-

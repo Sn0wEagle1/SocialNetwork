@@ -2,9 +2,13 @@ package internal
 
 import (
 	"database/sql"
+	"fmt"
 	"html/template"
+	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -90,56 +94,81 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 // RegisterHandler рендерит страницу регистрации и обрабатывает ввод пользователя
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	var errorMsg string
-	var formData = map[string]string{
-		"Username": "",
-		"Email":    "",
-	}
-
 	if r.Method == http.MethodPost {
 		username := r.FormValue("username")
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 
-		// Сохраняем данные для повторного отображения в форме
-		formData["Username"] = username
-		formData["Email"] = email
+		var errorMsg string
 
-		// Проверка на пустые поля
-		if username == "" || email == "" || password == "" {
-			errorMsg = "Все поля обязательны для заполнения"
-		} else if len(password) < 5 { // Проверка длины пароля
-			errorMsg = "Пароль должен содержать минимум 5 символов"
-		} else {
-			// Хеширование пароля
-			passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		// Проверка имени пользователя
+		if len(username) < 4 || len(username) > 20 {
+			errorMsg = "Имя пользователя должно быть длиной от 4 до 20 символов"
+		} else if strings.Contains(username, " ") {
+			errorMsg = "Имя пользователя не должно содержать пробелов"
+		} else if len(password) < 5 {
+			errorMsg = "Пароль должен быть длиной не менее 5 символов"
+		}
+
+		if errorMsg != "" {
+			log.Printf("Ошибка проверки: %v\n", errorMsg)
+
+			// Отправляем данные обратно в форму
+			tmplPath := filepath.Join("web", "templates", "register.html")
+			tmpl, err := template.ParseFiles(tmplPath)
 			if err != nil {
-				http.Error(w, "Ошибка при хешировании пароля", http.StatusInternalServerError)
+				log.Println("Ошибка при загрузке шаблона register.html:", err)
+				http.Error(w, "Не удалось загрузить шаблон register.html", http.StatusInternalServerError)
 				return
 			}
 
-			// Попытка сохранить пользователя
-			_, err = DB.Exec("INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3)", username, email, passwordHash)
-			if err != nil {
-				// Логируем текст ошибки для диагностики
-				log.Printf("Ошибка при сохранении пользователя: %v\n", err)
-
-				if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "уникальности") {
-					errorMsg = "Пользователь с таким email уже зарегистрирован"
-				} else {
-					errorMsg = "Не удалось сохранить пользователя из-за неизвестной ошибки"
-				}
-			}
-		}
-
-		// Если ошибок нет, перенаправляем на страницу авторизации
-		if errorMsg == "" {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			tmpl.Execute(w, map[string]string{
+				"ErrorMsg": errorMsg,
+				"Username": username,
+				"Email":    email,
+			})
 			return
 		}
+
+		// Хеширование пароля
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			log.Printf("Ошибка хеширования пароля: %v\n", err)
+			http.Error(w, "Ошибка при хешировании пароля", http.StatusInternalServerError)
+			return
+		}
+
+		// Сохранение пользователя в БД
+		_, err = DB.Exec("INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3)", username, email, passwordHash)
+		if err != nil {
+			log.Printf("Ошибка при сохранении пользователя: %v\n", err)
+
+			if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "уникальности") {
+				errorMsg = "Пользователь с таким email уже зарегистрирован"
+			} else {
+				errorMsg = "Не удалось сохранить пользователя из-за неизвестной ошибки"
+			}
+
+			tmplPath := filepath.Join("web", "templates", "register.html")
+			tmpl, err := template.ParseFiles(tmplPath)
+			if err != nil {
+				log.Println("Ошибка при загрузке шаблона register.html:", err)
+				http.Error(w, "Не удалось загрузить шаблон register.html", http.StatusInternalServerError)
+				return
+			}
+
+			tmpl.Execute(w, map[string]string{
+				"ErrorMsg": errorMsg,
+				"Username": username,
+				"Email":    email,
+			})
+			return
+		}
+
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
 	}
 
-	// Рендеринг страницы регистрации с сообщением об ошибке и заполненными данными
 	tmplPath := filepath.Join("web", "templates", "register.html")
 	tmpl, err := template.ParseFiles(tmplPath)
 	if err != nil {
@@ -148,11 +177,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Передаём сообщение об ошибке и заполненные данные в шаблон
-	tmpl.Execute(w, map[string]interface{}{
-		"ErrorMsg": errorMsg,
-		"FormData": formData,
-	})
+	tmpl.Execute(w, nil)
 }
 
 func PostsHandler(w http.ResponseWriter, r *http.Request) {
@@ -287,6 +312,12 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ProfileHandler(w http.ResponseWriter, r *http.Request) {
+	// Обрабатываем только GET-запросы
+	if r.Method != http.MethodGet {
+		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
+		return
+	}
+
 	// Получаем ID пользователя из сессии
 	userID, err := GetUserIDFromSession(r)
 	if err != nil {
@@ -294,10 +325,10 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Получаем данные пользователя
+	// Получаем данные пользователя из базы
 	var profileData ProfileData
 	err = DB.QueryRow(`
-		SELECT username, COALESCE(avatar_url, '../static/avatar.jpg'), registration_date
+		SELECT username, COALESCE(avatar_url, '/static/avatar.jpg'), registration_date
 		FROM users
 		WHERE id = $1
 	`, userID).Scan(&profileData.Username, &profileData.AvatarURL, &profileData.RegistrationDate)
@@ -307,24 +338,23 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Получаем количество постов и друзей пользователя
-	err = DB.QueryRow(`
-		SELECT COUNT(*) FROM posts WHERE user_id = $1
-	`, userID).Scan(&profileData.PostCount)
+	// Получаем количество постов и друзей
+	err = DB.QueryRow(`SELECT COUNT(*) FROM posts WHERE user_id = $1`, userID).Scan(&profileData.PostCount)
 	if err != nil {
 		log.Println("Ошибка при получении количества постов:", err)
 	}
 
-	err = DB.QueryRow(`
-		SELECT COUNT(*) FROM friendships WHERE user_id = $1
-	`, userID).Scan(&profileData.FriendCount)
+	err = DB.QueryRow(`SELECT COUNT(*) FROM friendships WHERE user_id = $1`, userID).Scan(&profileData.FriendCount)
 	if err != nil {
 		log.Println("Ошибка при получении количества друзей:", err)
 	}
 
 	// Загружаем посты пользователя
 	rows, err := DB.Query(`
-		SELECT content, created_at FROM posts WHERE user_id = $1 ORDER BY created_at DESC
+		SELECT content, created_at
+		FROM posts
+		WHERE user_id = $1
+		ORDER BY created_at DESC
 	`, userID)
 	if err != nil {
 		log.Println("Ошибка при запросе постов:", err)
@@ -333,31 +363,114 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
+	var posts []Post
 	for rows.Next() {
 		var post Post
-		err = rows.Scan(&post.Content, &post.CreatedAt)
-		if err != nil {
-			log.Println("Ошибка при чтении данных поста:", err)
+		var createdAt time.Time
+		if err := rows.Scan(&post.Content, &createdAt); err != nil {
+			log.Println("Ошибка при чтении поста:", err)
 			continue
 		}
-		profileData.Posts = append(profileData.Posts, post)
+		post.CreatedAt = createdAt.Format("02.01.2006 15:04")
+		posts = append(posts, post)
 	}
 
-	// Проверка на наличие постов
-	profileData.NoPosts = len(profileData.Posts) == 0
-	profileData.IsCurrentUser = true // пока для тестов текущего пользователя
+	// Если нет постов, помечаем
+	profileData.Posts = posts
+	profileData.NoPosts = len(posts) == 0
+	profileData.IsCurrentUser = true
 
-	// Рендерим шаблон профиля
+	// Рендерим профиль пользователя
 	tmplPath := filepath.Join("web", "templates", "profile.html")
 	tmpl, err := template.ParseFiles(tmplPath)
 	if err != nil {
 		log.Println("Ошибка при загрузке шаблона profile.html:", err)
-		http.Error(w, "Не удалось загрузить шаблон profile.html", http.StatusInternalServerError)
+		http.Error(w, "Не удалось загрузить шаблон", http.StatusInternalServerError)
 		return
 	}
 
 	err = tmpl.Execute(w, profileData)
 	if err != nil {
-		log.Println("Ошибка при выполнении шаблона profile.html:", err)
+		log.Println("Ошибка при рендеринге шаблона:", err)
 	}
+}
+
+func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		// Получаем ID текущего пользователя из сессии
+		userID, err := GetUserIDFromSession(r)
+		if err != nil {
+			log.Printf("Ошибка при получении ID пользователя: %v\n", err)
+			http.Error(w, "Вы не авторизованы", http.StatusUnauthorized)
+			return
+		}
+
+		// Получаем данные из формы
+		content := r.FormValue("content")
+		file, header, err := r.FormFile("image")
+		var imagePath string
+
+		if err == nil && header != nil {
+			defer file.Close()
+
+			// Сохраняем файл
+			imagePath, err = SaveUploadedFile(file, header)
+			if err != nil {
+				log.Printf("Ошибка при сохранении изображения: %v\n", err)
+				http.Error(w, "Ошибка при загрузке файла", http.StatusInternalServerError)
+				return
+			}
+		} else if err != http.ErrMissingFile {
+			log.Printf("Ошибка при загрузке файла: %v\n", err)
+			http.Error(w, "Ошибка при загрузке файла", http.StatusInternalServerError)
+			return
+		}
+
+		// Сохраняем пост в базе данных
+		_, err = DB.Exec(`
+			INSERT INTO posts (user_id, content, image_url, created_at)
+			VALUES ($1, $2, $3, NOW())
+		`, userID, content, imagePath)
+		if err != nil {
+			log.Printf("Ошибка при сохранении поста: %v\n", err)
+			http.Error(w, "Ошибка при создании поста", http.StatusInternalServerError)
+			return
+		}
+
+		// Перенаправляем на страницу с постами
+		http.Redirect(w, r, "/posts", http.StatusSeeOther)
+		return
+	}
+
+	// Рендеринг страницы создания поста
+	tmplPath := filepath.Join("web", "templates", "create-post.html")
+	tmpl, err := template.ParseFiles(tmplPath)
+	if err != nil {
+		log.Printf("Ошибка при загрузке шаблона create-post.html: %v\n", err)
+		http.Error(w, "Не удалось загрузить шаблон", http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w, nil)
+}
+
+func SaveUploadedFile(file multipart.File, header *multipart.FileHeader) (string, error) {
+	uploadDir := "./uploads"
+	err := os.MkdirAll(uploadDir, os.ModePerm)
+	if err != nil {
+		return "", fmt.Errorf("не удалось создать директорию для загрузки: %v", err)
+	}
+
+	filePath := filepath.Join(uploadDir, header.Filename)
+	out, err := os.Create(filePath)
+	if err != nil {
+		return "", fmt.Errorf("не удалось создать файл: %v", err)
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, file)
+	if err != nil {
+		return "", fmt.Errorf("ошибка при сохранении файла: %v", err)
+	}
+
+	return filePath, nil
 }
