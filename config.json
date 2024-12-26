@@ -1,0 +1,9 @@
+{
+    "DBHost": "localhost",
+    "DBPort": "5432",
+    "DBUser": "postgres",
+    "DBPassword": "",
+    "DBName": "SocialNetwork",
+    "SSLMode": "disable"
+  }
+  

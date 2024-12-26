@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -473,4 +474,57 @@ func SaveUploadedFile(file multipart.File, header *multipart.FileHeader) (string
 	}
 
 	return filePath, nil
+}
+
+func FindFriendsHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := GetUserIDFromSession(r) // Получение текущего пользователя
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		name := r.URL.Query().Get("name")
+		var results []User
+
+		if name != "" {
+			results, err = FindUsersByName(name, userID)
+			if err != nil {
+				http.Error(w, "Failed to search users", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		data := struct {
+			Results []User
+		}{
+			Results: results,
+		}
+
+		tmplPath := filepath.Join("web", "templates", "find-friends.html")
+		tmpl, err := template.ParseFiles(tmplPath)
+		if err != nil {
+			log.Fatalf("Error parsing template: %v", err)
+		}
+		tmpl.Execute(w, data)
+
+	case http.MethodPost:
+		friendID, err := strconv.Atoi(r.FormValue("friend_id"))
+		if err != nil || friendID <= 0 {
+			http.Error(w, "Invalid friend ID", http.StatusBadRequest)
+			return
+		}
+
+		err = AddFriend(userID, friendID)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to add friend: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/find-friends", http.StatusSeeOther)
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
 }

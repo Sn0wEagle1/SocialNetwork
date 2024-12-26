@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Friends</title>
+    <link rel="stylesheet" href="find-friends.css">
+</head>
+<body>
+    <header>
+        <nav class="nav">
+            <a href="/profile">Профиль</a>
+            <a href="/posts">Посты</a>
+            <a href="/find-friends">Друзья</a>
+        </nav>
+    </header>
+    <main class="main-content-friends">
+        <form action="/find-friends" method="get">
+            <label for="name">Поиск по имени:</label>
+            <input type="text" id="name" name="name" placeholder="Введите имя" required>
+            <button type="submit">Поиск</button>
+        </form>
+
+        <!-- Если есть результаты, сервер их добавит сюда -->
+        {{ if .Results }}
+        <div id="results">
+            <h2>Results</h2>
+            <ul>
+                {{ range .Results }}
+                <li>
+                    <span>{{ .Username }}</span>
+                    <form action="/find-friends" method="post" style="display: inline;">
+                        <input type="hidden" name="friend_id" value="{{ .ID }}">
+                        <button type="submit">Добавить друга</button>
+                    </form>
+                </li>
+                {{ end }}
+            </ul>
+        </div>
+        {{ else }}
+        <p>Не найдено результатов</p>
+        {{ end }}
+    </main>
+</body>
+</html>

@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	internal.InitConfig("config.json")
 	internal.InitDB()
 
 	http.HandleFunc("/", internal.HomeHandler)
@@ -17,6 +18,7 @@ func main() {
 	http.HandleFunc("/profile", internal.ProfileHandler)
 	http.HandleFunc("/create-post", internal.CreatePostHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
+	http.HandleFunc("/find-friends", internal.FindFriendsHandler)
 
 	log.Println("Сервер запущен на http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {

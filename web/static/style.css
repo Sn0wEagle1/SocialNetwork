@@ -104,9 +104,6 @@ button:hover {
     align-items: center;
 }
 
-.dropbtn:hover .avatar {
-    /* Optional: add hover effects for avatar */
-}
 
 .avatar {
     width: 40px;
